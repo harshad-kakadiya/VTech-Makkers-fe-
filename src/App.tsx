@@ -43,6 +43,7 @@ function Router() {
   return (
     <Layout>
       <Switch>
+          {/*Routes*/}
         <Route path="/" component={Home} />
         <Route path="/products" component={ProductsPage} />
         <Route path="/products/grizzly-screens" component={() => { window.location.href = '/products'; return null; }} />
