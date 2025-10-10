@@ -6,6 +6,8 @@ import { useLocation } from 'wouter';
 export default function ContactPage() {
   const [location] = useLocation();
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,7 +22,7 @@ export default function ContactPage() {
     const urlParams = new URLSearchParams(location.split('?')[1] || '');
     const product = urlParams.get('product') || '';
     const productName = urlParams.get('name') || '';
-    
+
     setFormData(prev => ({
       ...prev,
       product,
@@ -45,10 +47,10 @@ export default function ContactPage() {
               <path d="M150 200L250 190L350 210L450 195L550 215L650 190" stroke="currentColor" strokeWidth="1" opacity="0.2"/>
             </svg>
           </div>
-          
+
           {/* Semi-transparent Overlay */}
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-          
+
           {/* Header Content */}
           <div className="relative z-10 flex items-center justify-center h-full px-4">
             <div className="text-center text-white">
@@ -61,12 +63,12 @@ export default function ContactPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          
+
 
 
           {/* Split Screen Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            
+
             {/* Interactive Map - Desktop Only */}
             <div className="hidden lg:block">
               <div className="sticky top-8">
@@ -87,7 +89,7 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <div className="space-y-8">
-              
+
               {/* Why Partner With VTech Makkers Section */}
               <div className="bg-blue-600 text-white p-8 rounded-lg relative overflow-hidden">
                 {/* Industrial Pattern Background */}
@@ -101,10 +103,10 @@ export default function ContactPage() {
                     <rect width="400" height="300" fill="url(#grid)" />
                   </svg>
                 </div>
-                
+
                 <div className="relative z-10">
                   <h2 className="text-2xl font-bold mb-8 text-center">Why Partner With VTech Makkers?</h2>
-                  
+
                   <div className="space-y-6">
                     <div className="border-l-2 border-amber-400 pl-6 bg-slate-800/50 p-4 rounded-r">
                       <div className="flex items-center gap-3 mb-2">
@@ -144,7 +146,7 @@ export default function ContactPage() {
               {/* Form */}
               <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-lg">
                 <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Get Your Custom Quote</h2>
-                
+
                 {formData.productName && (
                   <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
@@ -153,23 +155,57 @@ export default function ContactPage() {
                   </div>
                 )}
 
-                <form onSubmit={(e) => { e.preventDefault(); /* Handle form submission */ }} className="space-y-6">
-                  
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/leads`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        // product_id: formData.product,
+                        message: formData.message
+                      })
+                    });
+                    if (response.ok) {
+                      setShowSuccessPopup(true);
+                      setFormData({
+                        name: '',
+                        email: '',
+                        company: '',
+                        phone: '',
+                        message: '',
+                        product: '',
+                        productName: ''
+                      });
+                    } else {
+                      setShowErrorPopup(true);
+                    }
+                  } catch (error) {
+                    console.error('Error:', error);
+                    setShowErrorPopup(true);
+                  }
+                }} className="space-y-6">
+
                   {/* Name and Email Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative">
-                      <input 
-                        type="text" 
-                        name="name" 
-                        id="name" 
-                        required 
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        required
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         className="peer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-transparent transition-all"
                         placeholder="Full Name"
                       />
-                      <label 
-                        htmlFor="name" 
+                      <label
+                        htmlFor="name"
                         className="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-700 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600"
                       >
                         Full Name *
@@ -177,18 +213,18 @@ export default function ContactPage() {
                     </div>
 
                     <div className="relative">
-                      <input 
-                        type="email" 
-                        name="email" 
-                        id="email" 
-                        required 
+                      <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        required
                         value={formData.email}
                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                         className="peer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-transparent transition-all"
                         placeholder="Email Address"
                       />
-                      <label 
-                        htmlFor="email" 
+                      <label
+                        htmlFor="email"
                         className="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-700 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600"
                       >
                         Email Address *
@@ -199,17 +235,17 @@ export default function ContactPage() {
                   {/* Company and Phone Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative">
-                      <input 
-                        type="text" 
-                        name="company" 
-                        id="company" 
+                      <input
+                        type="text"
+                        name="company"
+                        id="company"
                         value={formData.company}
                         onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
                         className="peer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-transparent transition-all"
                         placeholder="Company"
                       />
-                      <label 
-                        htmlFor="company" 
+                      <label
+                        htmlFor="company"
                         className="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-700 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600"
                       >
                         Company
@@ -217,18 +253,18 @@ export default function ContactPage() {
                     </div>
 
                     <div className="relative">
-                      <input 
-                        type="tel" 
-                        name="phone" 
-                        id="phone" 
+                      <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
                         required
                         value={formData.phone}
                         onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                         className="peer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-transparent transition-all"
                         placeholder="Phone Number"
                       />
-                      <label 
-                        htmlFor="phone" 
+                      <label
+                        htmlFor="phone"
                         className="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-700 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600"
                       >
                         Phone Number *
@@ -238,18 +274,18 @@ export default function ContactPage() {
 
                   {/* Message */}
                   <div className="relative">
-                    <textarea 
-                      name="message" 
-                      id="message" 
-                      rows={5} 
-                      required 
+                    <textarea
+                      name="message"
+                      id="message"
+                      rows={5}
+                      required
                       value={formData.message}
                       onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                       className="peer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-transparent transition-all resize-none"
                       placeholder="Tell us about your project requirements..."
                     ></textarea>
-                    <label 
-                      htmlFor="message" 
+                    <label
+                      htmlFor="message"
                       className="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-700 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600"
                     >
                       Project Details *
@@ -268,10 +304,10 @@ export default function ContactPage() {
 
           {/* Contact Info Cards */}
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+
             {/* Phone Card */}
-            <a 
-              href="tel:+919426029949" 
+            <a
+              href="tel:+919426029949"
               className="group bg-white p-6 rounded-xl border border-gray-200 shadow-lg hover:shadow-xl hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="flex items-center space-x-4">
@@ -288,8 +324,8 @@ export default function ContactPage() {
             </a>
 
             {/* Email Card */}
-            <a 
-              href="mailto:info@tachmakkers.in" 
+            <a
+              href="mailto:info@tachmakkers.in"
               className="group bg-white p-6 rounded-xl border border-gray-200 shadow-lg hover:shadow-xl hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="flex items-center space-x-4">
@@ -325,7 +361,7 @@ export default function ContactPage() {
 
       {/* Sticky Floating Quote Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Button 
+        <Button
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 font-semibold flex items-center space-x-2"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
@@ -333,6 +369,52 @@ export default function ContactPage() {
           <span>Get Quote</span>
         </Button>
       </div>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform animate-in">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Success!</h3>
+              <p className="text-gray-600 mb-6">Your inquiry has been submitted successfully. We'll get back to you soon!</p>
+              <Button
+                onClick={() => setShowSuccessPopup(false)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform animate-in">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Oops!</h3>
+              <p className="text-gray-600 mb-6">Failed to submit inquiry. Please try again or contact us directly.</p>
+              <Button
+                onClick={() => setShowErrorPopup(false)}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
